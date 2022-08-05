@@ -4,6 +4,7 @@
   "description": "To understand how HMAC works. Use of cryptography and the basics of encryption and decoding.",
   "main": "app.js",
   "scripts": {
+    "dev": "nodemon app.js",
     "test": "jest"
   },
   "keywords": [
@@ -15,6 +16,10 @@
   "author": "Nav",
   "license": "ISC",
   "dependencies": {
+    "dotenv": "^16.0.1",
     "express": "^4.18.1"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.19"
   }
 }
