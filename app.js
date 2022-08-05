@@ -23,17 +23,13 @@ app.post('/hash', (req, res) => {
   const { body } = req;
   if (typeof body !== 'object') {
     //
-    // ---> Since we are using json objects
-    //      an object is required to create a hash
+    // ---> Since we are using json an object is required to create a hash
 
     res.status(400).json({
       message: `An object with secret key/value pairs is needed to generate a hash`,
     });
   } else {
     //
-    // create a hash that encloses any secret info
-    //
-
     const hash = createHmac('sha256', process.env.SECRET)
       .update(JSON.stringify(body.password))
       .digest('base64');
@@ -54,11 +50,12 @@ app.post('/hash', (req, res) => {
   }
 });
 
-//  the purpose of this verification is to find out if the request is
-//  coming from a valid api consumer that we trust
-//  we stored the password as hash so even if the hash value gets
-//  compromised, the attacker won't be able to guess the password
-
+/*
+    the purpose of this verification is to find out if the request is
+    coming from a valid api consumer that we trust we stored the password 
+    as hash so even if the hash value gets compromised, the attacker won't 
+    be able to guess the password
+*/
 app.get('/protected', hmacVerify(fs, path), (req, res) => {
   res.json({ message: 'Your are now visting a protected route' });
 });
