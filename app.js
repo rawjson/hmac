@@ -2,13 +2,15 @@
 
 An encryption mechanism that creates a hash using JSON payload
 HMAC is only for hashing a string or an object and it can not
-decrypt the message. To encrypt or decrypt  use Cipher
+decrypt the message. To encrypt or decrypt use Cipher
 
 */
 
 const express = require('express');
 const { createHmac } = require('node:crypto');
 const hmacVerify = require('./middlewares/hmacVerify.js');
+const fs = require('fs');
+const path = require('path');
 
 require('dotenv').config();
 
@@ -17,9 +19,8 @@ const port = 8080;
 
 app.use(express.json());
 
-app.post('/create/hash', (req, res) => {
+app.post('/hash', (req, res) => {
   const { body } = req;
-
   if (typeof body !== 'object') {
     //
     // ---> Since we are using json objects
@@ -32,26 +33,33 @@ app.post('/create/hash', (req, res) => {
     //
     // create a hash that encloses any secret info
     //
+
     const hash = createHmac('sha256', process.env.SECRET)
-      .update(JSON.stringify(body))
+      .update(JSON.stringify(body.password))
       .digest('base64');
 
-    // ------> an important thing to note here is that the hash
-    //         will remain same for this data provided
-    //         if someone supplies the same data object
-    //         then protected route can be accessed
+    //  ---> our api consumers share a password and we store it in memory with a hash
+    try {
+      fs.writeFileSync(
+        path.resolve(__dirname, `./data.json`),
+        JSON.stringify({ hash })
+      );
+    } catch (err) {
+      console.log(err);
+    }
 
     res.status(201).json({
-      hash,
-      message: 'Include this in req headers as "x-hash-in-header"',
+      message: 'Include your password as "api-key" in request headers',
     });
   }
 });
 
-app.get('/protected', hmacVerify, (req, res) => {
-  // ----> hash in request header is verified and
-  //       protected route is opened
+//  the purpose of this verification is to find out if the request is
+//  coming from a valid api consumer that we trust
+//  we stored the password as hash so even if the hash value gets
+//  compromised, the attacker won't be able to guess the password
 
+app.get('/protected', hmacVerify(fs, path), (req, res) => {
   res.json({ message: 'Your are now visting a protected route' });
 });
 
